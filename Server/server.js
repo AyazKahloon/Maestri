@@ -7,13 +7,6 @@ const connectDB = require('./config/database');
 const { socketAuth } = require('./config/socket');
 const handleMessage = require('./socket/messageHandler');
 
-require('./models/Student');
-require('./models/Tutor');
-require('./models/Subject');
-require('./models/Conversation');
-require('./models/Message');
-require('./models/Review');
-
 // Load environment variables
 dotenv.config();
 
@@ -23,15 +16,39 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// CORS configuration - ADD THIS BEFORE OTHER MIDDLEWARE
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://maestri-11.onrender.com"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// Handle preflight requests
+app.options('*', cors({
+  origin: [
+    "http://localhost:3000", 
+    "https://maestri-11.onrender.com"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
 // Socket.IO setup
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3173", "http://localhost:5173"],
+    origin: [
+      "http://localhost:3000",
+      "https://maestri-11.onrender.com"
+    ],
     methods: ["GET", "POST"],
     credentials: true
   }
 });
-
 
 // Socket.IO middleware
 io.use(socketAuth);
@@ -39,21 +56,13 @@ io.use(socketAuth);
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`User ${socket.userId} connected`);
-  
-  // Handle messaging
   handleMessage(io, socket);
 });
 
 // Make io accessible to routes
 app.set('io', io);
 
-// Middleware
-// Middleware
-app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3173", "http://localhost:5173"],
-  credentials: true
-}));
-
+// Body parser middleware
 app.use(express.json());
 
 // Routes

@@ -19,7 +19,13 @@ import {
 import "./Login.css";
 import axios from "axios";
 
-const API_BASE_URL = "https://maestri.onrender.com";
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? "https://maestri.onrender.com/api" 
+  : (process.env.REACT_APP_API_URL || "http://localhost:5000/api");
+
+console.log('Environment:', process.env.NODE_ENV);
+console.log('API_BASE_URL:', API_BASE_URL);
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,7 +134,6 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // const handleSubmit = (e) => {
   //   e.preventDefault();
 
   //   if (!validateForm()) {
@@ -208,6 +213,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Add this debug line
+    console.log("API_BASE_URL:", API_BASE_URL);
+    console.log("Full login URL:", `${API_BASE_URL}/auth/login`);
     if (!validateForm()) {
       console.log("Form validation failed:", errors);
       return;

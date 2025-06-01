@@ -29,9 +29,8 @@ const Message = ({ onClose }) => {
 
   // Redux state
   const { user } = useSelector((state) => state.auth);
-  const { conversations, messages, currentConversation, unreadCount } = useSelector(
-    (state) => state.messages
-  );
+  const { conversations, messages, currentConversation, unreadCount } =
+    useSelector((state) => state.messages);
 
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,109 +64,116 @@ const Message = ({ onClose }) => {
 
   // Fetch conversations
   // Fetch conversations
-useEffect(() => {
-  const fetchConversations = async () => {
-    try {
-      const response = await api.get('/messages/conversations');
-      if (response.data.success) {
-        dispatch(setConversations(response.data.conversations));
-      }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    } finally {
-      setLoading(false); // This line should always execute
-    }
-  };
-
-  if (user) {
-    fetchConversations();
-  } else {
-    setLoading(false); // Add this line for when user is not available
-  }
-}, [user, dispatch]);
-
-
-// Fetch messages for selected conversation
-useEffect(() => {
-  const fetchMessages = async () => {
-    if (currentConversation) {
+  useEffect(() => {
+    const fetchConversations = async () => {
       try {
-        console.log('Fetching messages for conversation:', currentConversation._id);
-        const response = await api.get(`/messages/conversations/${currentConversation._id}/messages`);
-        console.log('Messages response:', response.data);
+        const response = await api.get("/messages/conversations");
         if (response.data.success) {
-          dispatch(setMessages(response.data.messages));
+          dispatch(setConversations(response.data.conversations));
         }
       } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error("Error fetching conversations:", error);
+      } finally {
+        setLoading(false); // This line should always execute
       }
-    }
-  };
-
-  fetchMessages();
-}, [currentConversation, dispatch]);
-
-
-// Initialize socket connection
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token && user) {
-    const newSocket = io('http://localhost:5000', {
-      auth: { token }
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Connected to socket server');
-      setSocket(newSocket);
-    });
-
-    newSocket.on('new_message', (message) => {
-      console.log('Received new message:', message);
-      if (currentConversation && message.conversation === currentConversation._id) {
-        // Add message to current conversation
-        dispatch(addMessage(message));
-      }
-      
-      // Update conversation list with new last message
-      const updatedConversations = conversations.map(conv => 
-        conv._id === message.conversation 
-          ? { 
-              ...conv, 
-              lastMessage: { 
-                content: message.content, 
-                sender: message.sender, 
-                sentAt: message.createdAt 
-              } 
-            }
-          : conv
-      );
-      dispatch(setConversations(updatedConversations));
-    });
-
-    newSocket.on('joined_conversation', (data) => {
-      console.log('Joined conversation:', data);
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
-
-    return () => {
-      newSocket.disconnect();
     };
-  }
-}, [user, currentConversation, conversations, dispatch]);
 
+    if (user) {
+      fetchConversations();
+    } else {
+      setLoading(false); // Add this line for when user is not available
+    }
+  }, [user, dispatch]);
+
+  // Fetch messages for selected conversation
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (currentConversation) {
+        try {
+          console.log(
+            "Fetching messages for conversation:",
+            currentConversation._id
+          );
+          const response = await api.get(
+            `/messages/conversations/${currentConversation._id}/messages`
+          );
+          console.log("Messages response:", response.data);
+          if (response.data.success) {
+            dispatch(setMessages(response.data.messages));
+          }
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+        }
+      }
+    };
+
+    fetchMessages();
+  }, [currentConversation, dispatch]);
+
+  // Initialize socket connection
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && user) {
+      const newSocket = io(
+        process.env.REACT_APP_SOCKET_URL || "http://localhost:5000",
+        {
+          auth: { token },
+        }
+      );
+
+      newSocket.on("connect", () => {
+        console.log("Connected to socket server");
+        setSocket(newSocket);
+      });
+
+      newSocket.on("new_message", (message) => {
+        console.log("Received new message:", message);
+        if (
+          currentConversation &&
+          message.conversation === currentConversation._id
+        ) {
+          // Add message to current conversation
+          dispatch(addMessage(message));
+        }
+
+        // Update conversation list with new last message
+        const updatedConversations = conversations.map((conv) =>
+          conv._id === message.conversation
+            ? {
+                ...conv,
+                lastMessage: {
+                  content: message.content,
+                  sender: message.sender,
+                  sentAt: message.createdAt,
+                },
+              }
+            : conv
+        );
+        dispatch(setConversations(updatedConversations));
+      });
+
+      newSocket.on("joined_conversation", (data) => {
+        console.log("Joined conversation:", data);
+      });
+
+      newSocket.on("error", (error) => {
+        console.error("Socket error:", error);
+      });
+
+      return () => {
+        newSocket.disconnect();
+      };
+    }
+  }, [user, currentConversation, conversations, dispatch]);
 
   // Join conversation room when selected
-// Join conversation room when selected
-useEffect(() => {
-  if (socket && currentConversation) {
-    console.log('Joining conversation:', currentConversation._id);
-    socket.emit('join_conversation', currentConversation._id);
-  }
-}, [socket, currentConversation]);
-
+  // Join conversation room when selected
+  useEffect(() => {
+    if (socket && currentConversation) {
+      console.log("Joining conversation:", currentConversation._id);
+      socket.emit("join_conversation", currentConversation._id);
+    }
+  }, [socket, currentConversation]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -175,45 +181,43 @@ useEffect(() => {
   }, [messages]);
 
   // Socket connection for real-time updates
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token && user) {
-    const newSocket = io('http://localhost:5000', {
-      auth: { token }
-    });
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && user) {
+      const newSocket = io("http://localhost:5000", {
+        auth: { token },
+      });
 
-    newSocket.on('connect', () => {
-      console.log('Connected to socket server');
-      setSocket(newSocket);
-    });
+      newSocket.on("connect", () => {
+        console.log("Connected to socket server");
+        setSocket(newSocket);
+      });
 
-    // Listen for request acceptance
-    newSocket.on('request_accepted', async (data) => {
-      console.log('Request accepted:', data);
-      // Refresh user data to get updated tutorsAdded
-      await refreshUserData();
-      alert(`Great! ${data.tutorName} has accepted your request!`);
-    });
+      // Listen for request acceptance
+      newSocket.on("request_accepted", async (data) => {
+        console.log("Request accepted:", data);
+        // Refresh user data to get updated tutorsAdded
+        await refreshUserData();
+        alert(`Great! ${data.tutorName} has accepted your request!`);
+      });
 
-    newSocket.on('request_declined', (data) => {
-      console.log('Request declined:', data);
-      alert(`${data.tutorName} has declined your request.`);
-    });
+      newSocket.on("request_declined", (data) => {
+        console.log("Request declined:", data);
+        alert(`${data.tutorName} has declined your request.`);
+      });
 
-    return () => {
-      newSocket.disconnect();
-    };
-  }
-}, [user]);
+      return () => {
+        newSocket.disconnect();
+      };
+    }
+  }, [user]);
 
-// Auto-scroll to bottom when new messages arrive
-useEffect(() => {
-  if (messagesEndRef.current) {
-    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }
-}, [messages]);
-
-
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -233,70 +237,71 @@ useEffect(() => {
   };
 
   const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!newMessage.trim() || !currentConversation || sendingMessage) return;
+    e.preventDefault();
+    if (!newMessage.trim() || !currentConversation || sendingMessage) return;
 
-  setSendingMessage(true);
-  const messageContent = newMessage.trim();
-  setNewMessage('');
+    setSendingMessage(true);
+    const messageContent = newMessage.trim();
+    setNewMessage("");
 
-  // Create optimistic message for immediate UI update
-  const optimisticMessage = {
-    _id: Date.now().toString(), // Temporary ID
-    conversation: currentConversation._id,
-    sender: user.userType,
-    senderId: {
-      _id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName
-    },
-    content: messageContent,
-    createdAt: new Date().toISOString(),
-    isRead: false
+    // Create optimistic message for immediate UI update
+    const optimisticMessage = {
+      _id: Date.now().toString(), // Temporary ID
+      conversation: currentConversation._id,
+      sender: user.userType,
+      senderId: {
+        _id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      content: messageContent,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
+
+    // Add message to UI immediately
+    dispatch(addMessage(optimisticMessage));
+
+    try {
+      // Send via socket for real-time to other users
+      if (socket) {
+        socket.emit("send_message", {
+          conversationId: currentConversation._id,
+          content: messageContent,
+        });
+      }
+
+      // Also send via API for persistence
+      const response = await api.post("/messages/messages", {
+        conversationId: currentConversation._id,
+        content: messageContent,
+      });
+
+      // Replace optimistic message with real message from server
+      if (response.data.success) {
+        const realMessage = response.data.message;
+        // Update the message in the store with real data
+        dispatch(
+          updateMessage({
+            tempId: optimisticMessage._id,
+            realMessage: realMessage,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Remove optimistic message on error
+      dispatch(removeMessage(optimisticMessage._id));
+      setNewMessage(messageContent); // Restore message on error
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
-  // Add message to UI immediately
-  dispatch(addMessage(optimisticMessage));
-
-  try {
-    // Send via socket for real-time to other users
-    if (socket) {
-      socket.emit('send_message', {
-        conversationId: currentConversation._id,
-        content: messageContent
-      });
-    }
-
-    // Also send via API for persistence
-    const response = await api.post('/messages/messages', {
-      conversationId: currentConversation._id,
-      content: messageContent
-    });
-
-    // Replace optimistic message with real message from server
-    if (response.data.success) {
-      const realMessage = response.data.message;
-      // Update the message in the store with real data
-      dispatch(updateMessage({ 
-        tempId: optimisticMessage._id, 
-        realMessage: realMessage 
-      }));
-    }
-
-  } catch (error) {
-    console.error('Error sending message:', error);
-    // Remove optimistic message on error
-    dispatch(removeMessage(optimisticMessage._id));
-    setNewMessage(messageContent); // Restore message on error
-  } finally {
-    setSendingMessage(false);
-  }
-};
-
-
-
   const getOtherParticipant = (conversation) => {
-    return user.userType === "student" ? conversation.tutor : conversation.student;
+    return user.userType === "student"
+      ? conversation.tutor
+      : conversation.student;
   };
 
   const filteredConversations = conversations.filter((conversation) => {
@@ -374,7 +379,9 @@ useEffect(() => {
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder={`Search ${user.userType === "student" ? "tutors" : "students"}...`}
+              placeholder={`Search ${
+                user.userType === "student" ? "tutors" : "students"
+              }...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -409,7 +416,9 @@ useEffect(() => {
                   <div
                     key={conversation._id}
                     className={`contact-item ${
-                      currentConversation?._id === conversation._id ? "active" : ""
+                      currentConversation?._id === conversation._id
+                        ? "active"
+                        : ""
                     }`}
                     onClick={() => handleContactSelect(conversation)}
                     role="button"
@@ -434,15 +443,20 @@ useEffect(() => {
                           {contact.firstName} {contact.lastName}
                         </h4>
                         {conversation.unreadCount > 0 && (
-                          <span className="unread-badge">{conversation.unreadCount}</span>
+                          <span className="unread-badge">
+                            {conversation.unreadCount}
+                          </span>
                         )}
                       </div>
                       {user.userType === "student" && conversation.subject && (
-                        <p className="contact-subject">{conversation.subject.name}</p>
+                        <p className="contact-subject">
+                          {conversation.subject.name}
+                        </p>
                       )}
                       <div className="last-message">
                         <p className="message-preview">
-                          {conversation.lastMessage?.content || "Start a conversation..."}
+                          {conversation.lastMessage?.content ||
+                            "Start a conversation..."}
                         </p>
                         <span className="message-time">
                           {conversation.lastMessage &&
@@ -480,9 +494,10 @@ useEffect(() => {
                       {getOtherParticipant(currentConversation).firstName}{" "}
                       {getOtherParticipant(currentConversation).lastName}
                     </h4>
-                    {user.userType === "student" && currentConversation.subject && (
-                      <p>{currentConversation.subject.name}</p>
-                    )}
+                    {user.userType === "student" &&
+                      currentConversation.subject && (
+                        <p>{currentConversation.subject.name}</p>
+                      )}
                   </div>
                 </div>
               </div>
@@ -497,7 +512,9 @@ useEffect(() => {
                   >
                     <div className="message-content">
                       <p>{message.content}</p>
-                      <span className="message-time">{formatMessageTime(message.createdAt)}</span>
+                      <span className="message-time">
+                        {formatMessageTime(message.createdAt)}
+                      </span>
                     </div>
                   </div>
                 ))}

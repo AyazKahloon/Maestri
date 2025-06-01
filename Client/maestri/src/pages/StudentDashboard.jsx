@@ -573,37 +573,6 @@ const refreshUserData = async () => {
           </section>
 
           {/* Available Tutors */}
-          {/* <section className="dashboard-section">
-            <h3>Available Tutors</h3>
-            <div className="tutors-list">
-              {availableTutors.map(tutor => (
-                <div key={tutor.id} className="tutor-card">
-                  <div className="tutor-info">
-                    <h4>{tutor.name}</h4>
-                    <p className="tutor-subject">{tutor.subject}</p>
-                    <div className="tutor-details">
-                      <span className="tutor-rating">
-                        <FaStar /> {tutor.rating}
-                      </span>
-                      <span className="tutor-price">{tutor.price}</span>
-                      <span className={`tutor-status ${tutor.online ? 'online' : 'offline'}`}>
-                        {tutor.online ? 'Online' : 'Offline'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="tutor-actions">
-                    <button className="contact-btn" onClick={handleShowMessages}>
-                      Contact
-                    </button>
-                    <button className="book-btn">Book Session</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section> */}
-
-          {/* Available Tutors */}
-          {/* Available Tutors */}
           <section className="dashboard-section">
             <h3>Available Tutors</h3>
 

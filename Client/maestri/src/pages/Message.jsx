@@ -21,7 +21,7 @@ import "./Message.css";
 import axios from "axios";
 import io from "socket.io-client";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://maestri.onrender.com";
 
 const Message = ({ onClose }) => {
   const dispatch = useDispatch();

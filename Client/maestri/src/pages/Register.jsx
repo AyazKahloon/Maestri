@@ -15,7 +15,7 @@ import {
 } from "react-icons/fa";
 import "./Register.css";
 const API_BASE_URL =
-"http://localhost:5000/api";
+"https://maestri.onrender.com";
 
 const Register = () => {
   const navigate = useNavigate();

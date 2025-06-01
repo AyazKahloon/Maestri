@@ -16,21 +16,10 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// CORS configuration - ADD THIS BEFORE OTHER MIDDLEWARE
+// CORS configuration
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://maestri-11.onrender.com"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
-
-// Handle preflight requests
-app.options('*', cors({
-  origin: [
-    "http://localhost:3000", 
     "https://maestri-11.onrender.com"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -62,10 +51,10 @@ io.on('connection', (socket) => {
 // Make io accessible to routes
 app.set('io', io);
 
-// Body parser middleware
+// Middleware
 app.use(express.json());
 
-// Routes
+// Routes - MAKE SURE THESE PATHS ARE CORRECT
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 

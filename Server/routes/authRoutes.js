@@ -15,7 +15,6 @@ const {
   declineStudentRequest
 } = require('../controllers/authController');
 
-
 const { protect, tutorOnly } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -23,9 +22,7 @@ const router = express.Router();
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
-// Public route to get available tutors
 router.get('/tutors', getAvailableTutors);
-
 
 // Protected routes
 router.get('/me', protect, getMe);
@@ -43,6 +40,5 @@ router.post('/send-request', protect, sendRequestToTutor);
 router.get('/tutor/requests', protect, tutorOnly, getTutorRequests);
 router.put('/tutor/requests/:requestId/accept', protect, tutorOnly, acceptStudentRequest);
 router.put('/tutor/requests/:requestId/decline', protect, tutorOnly, declineStudentRequest);
-
 
 module.exports = router;
